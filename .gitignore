@@ -1,1 +1,58 @@
+<<<<<<< HEAD
 node_modules
+=======
+# Dependencias
+/node_modules
+/.pnp
+.pnp.js
+
+# Build de Next.js
+/.next/
+/out/
+
+# Producción
+/build
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variables de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Coverage (testing)
+coverage/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Docker (opcional)
+docker-compose.override.yml
+
+# Archivos de lock (opcional, según tu equipo)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+>>>>>>> 711a514b841dea312764ba0d9a446970983d7655

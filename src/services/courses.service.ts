@@ -29,7 +29,7 @@ export interface CreateCoursePayload {
 
 export type UpdateCoursePayload = Partial<CreateCoursePayload & { isPublished: boolean }>
 
-/** GET /api/courses — catálogo público con filtros */
+/** GET /api/courses — catálogo público con filtros y paginación */
 export async function getCourses(
   filters: CourseFilters = {}
 ): Promise<PaginatedResponse<Course>> {
@@ -39,7 +39,7 @@ export async function getCourses(
   return data.data
 }
 
-/** GET /api/courses/featured */
+/** GET /api/courses/featured — top 8 por rating */
 export async function getFeaturedCourses(): Promise<Course[]> {
   const { data } = await apiClient.get<ApiResponse<Course[]>>('/courses/featured')
   return data.data
@@ -57,7 +57,7 @@ export async function getMyCourses(): Promise<Course[]> {
   return data.data
 }
 
-/** GET /api/courses/manage/:id — admin/instructor sin filtro de publicado */
+/** GET /api/courses/manage/:id — admin/instructor, incluye no publicados */
 export async function getCourseAdmin(id: string): Promise<Course> {
   const { data } = await apiClient.get<ApiResponse<Course>>(`/courses/manage/${id}`)
   return data.data
@@ -75,7 +75,7 @@ export async function updateCourse(id: string, payload: UpdateCoursePayload): Pr
   return data.data
 }
 
-/** PATCH /api/courses/:id/publish */
+/** PATCH /api/courses/:id/publish — toggle publicado/borrador */
 export async function togglePublishCourse(id: string): Promise<{ isPublished: boolean }> {
   const { data } = await apiClient.patch<ApiResponse<{ isPublished: boolean }>>(
     `/courses/${id}/publish`
