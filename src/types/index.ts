@@ -4,8 +4,13 @@ export interface User {
   id: string
   name: string
   email: string
+<<<<<<< HEAD
+  avatarUrl?: string
+  bio?: string
+=======
   avatarUrl?: string | null
   bio?: string | null
+>>>>>>> 711a514b841dea312764ba0d9a446970983d7655
   role: 'student' | 'instructor' | 'admin'
   createdAt: string
 }
@@ -85,7 +90,26 @@ export interface Enrollment {
   completedAt?: string | null
 }
 
+<<<<<<< HEAD
+// Certificados
+
+export interface Certificate {
+  id: string
+  code: string
+  userId: string
+  courseId: string
+  courseTitle: string
+  instructorName: string
+  instructorId: string
+  issuedAt: string
+  verificationUrl: string
+  downloadUrl?: string
+}
+
+// ─── Respuestas de API ─────────────────────────────────────────────────────────
+=======
 // ─── Respuestas de API ────────────────────────────────────────────────────────
+>>>>>>> 711a514b841dea312764ba0d9a446970983d7655
 
 export interface ApiResponse<T> {
   data: T

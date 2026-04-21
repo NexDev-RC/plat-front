@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+// File: C:\Users\aaagu\OneDrive\Documentos\plat-front\src\app\layout.tsx
+=======
 // File: C:\dev26\codesign\Base Platform\plat-front\src\app\layout.tsx
+>>>>>>> 711a514b841dea312764ba0d9a446970983d7655
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

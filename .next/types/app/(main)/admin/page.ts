@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+// File: C:\Users\aaagu\OneDrive\Documentos\plat-front\src\app\(main)\admin\page.tsx
+=======
 // File: C:\dev26\codesign\Base Platform\plat-front\src\app\(main)\admin\page.tsx
+>>>>>>> 711a514b841dea312764ba0d9a446970983d7655
 import * as entry from '../../../../../src/app/(main)/admin/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
