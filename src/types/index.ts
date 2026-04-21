@@ -5,6 +5,7 @@ export interface User {
   name: string
   email: string
   avatarUrl?: string
+  bio?: string
   role: 'student' | 'instructor' | 'admin'
   createdAt: string
 }
@@ -82,6 +83,21 @@ export interface Enrollment {
   lastWatchedLessonId?: string
   enrolledAt: string
   completedAt?: string
+}
+
+// Certificados
+
+export interface Certificate {
+  id: string
+  code: string
+  userId: string
+  courseId: string
+  courseTitle: string
+  instructorName: string
+  instructorId: string
+  issuedAt: string
+  verificationUrl: string
+  downloadUrl?: string
 }
 
 // ─── Respuestas de API ─────────────────────────────────────────────────────────

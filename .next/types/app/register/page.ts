@@ -1,8 +1,8 @@
-// File: D:\2026\CODESIGN 26\Desarrollo\Base Platform\eduflow\src\app\(main)\instructor\courses\page.tsx
-import * as entry from '../../../../../../src/app/(main)/instructor/courses/page.js'
+// File: C:\Users\aaagu\OneDrive\Documentos\plat-front\src\app\register\page.tsx
+import * as entry from '../../../../src/app/register/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../../src/app/(main)/instructor/courses/page.js')
+type TEntry = typeof import('../../../../src/app/register/page.js')
 
 type SegmentParams<T extends Object = any> = T extends Record<string, any>
   ? { [K in keyof T]: T[K] extends string ? string | string[] | undefined : never }
