@@ -1,10 +1,11 @@
-// ─── Usuario ─────────────────────────────────────────────────────────────────
+// ─── Usuario ──────────────────────────────────────────────────────────────────
 
 export interface User {
   id: string
   name: string
   email: string
-  avatarUrl?: string
+  avatarUrl?: string | null
+  bio?: string | null
   role: 'student' | 'instructor' | 'admin'
   createdAt: string
 }
@@ -20,8 +21,8 @@ export interface Category {
 export interface Instructor {
   id: string
   name: string
-  avatarUrl?: string
-  bio?: string
+  avatarUrl?: string | null
+  bio?: string | null
   rating?: number
   totalStudents?: number
 }
@@ -29,8 +30,8 @@ export interface Instructor {
 export interface Lesson {
   id: string
   title: string
-  description?: string
-  videoUrl?: string
+  description?: string | null
+  videoUrl?: string | null
   duration: number    // segundos
   order: number
   isFree: boolean
@@ -50,10 +51,10 @@ export interface Course {
   slug: string
   description: string
   shortDescription: string
-  thumbnailUrl: string
-  previewVideoUrl?: string
+  thumbnailUrl?: string | null
+  previewVideoUrl?: string | null
   price: number
-  discountPrice?: number
+  discountPrice?: number | null
   rating: number
   totalReviews: number
   totalStudents: number
@@ -77,14 +78,14 @@ export interface Enrollment {
   userId: string
   courseId: string
   course: Course
-  progress: number           // 0-100
-  completedLessons: string[] // IDs de lecciones completadas
-  lastWatchedLessonId?: string
+  progress: number
+  completedLessons: string[]
+  lastWatchedLessonId?: string | null
   enrolledAt: string
-  completedAt?: string
+  completedAt?: string | null
 }
 
-// ─── Respuestas de API ─────────────────────────────────────────────────────────
+// ─── Respuestas de API ────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
   data: T

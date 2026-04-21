@@ -1,4 +1,4 @@
-// File: D:\2026\CODESIGN 26\Desarrollo\Base Platform\eduflow\src\app\(main)\instructor\courses\page.tsx
+// File: C:\dev26\codesign\Base Platform\plat-front\src\app\(main)\instructor\courses\page.tsx
 import * as entry from '../../../../../../src/app/(main)/instructor/courses/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
