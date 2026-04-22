@@ -3,13 +3,13 @@ import { ArrowRight, TrendingUp, Shield, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonBase, sizeClasses } from '@/components/ui/Button'
 import { CourseCard } from '@/components/courses/CourseCard'
-import { getFeaturedCourses } from '@/services/courses.service'
-import { getCategories } from '@/services/categories.service'
+import { serverGet, serverGetPaginated } from '@/lib/server-client'
+import type { Course, Category } from '@/types'
 
 const FEATURES = [
-  { icon: TrendingUp, title: 'Aprende a tu ritmo',     desc: 'Accede a los cursos en cualquier momento y desde cualquier dispositivo.' },
-  { icon: Shield,     title: 'Certificados válidos',   desc: 'Obtén certificados reconocidos al completar cada curso.' },
-  { icon: Zap,        title: 'Instructores expertos',  desc: 'Aprende de profesionales con experiencia real en la industria.' },
+  { icon: TrendingUp, title: 'Aprende a tu ritmo',    desc: 'Accede a los cursos en cualquier momento y desde cualquier dispositivo.' },
+  { icon: Shield,     title: 'Certificados válidos',  desc: 'Obtén certificados reconocidos al completar cada curso.' },
+  { icon: Zap,        title: 'Instructores expertos', desc: 'Aprende de profesionales con experiencia real en la industria.' },
 ]
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -18,13 +18,13 @@ const CATEGORY_ICONS: Record<string, string> = {
 }
 
 export default async function HomePage() {
-  const [featuredCourses, categories] = await Promise.allSettled([
-    getFeaturedCourses(),
-    getCategories(),
+  const [featuredResult, categoriesResult] = await Promise.allSettled([
+    serverGet<Course[]>('/courses/featured'),
+    serverGet<Category[]>('/categories'),
   ])
 
-  const courses   = featuredCourses.status === 'fulfilled' ? featuredCourses.value : []
-  const cats      = categories.status    === 'fulfilled' ? categories.value    : []
+  const featuredCourses = featuredResult.status   === 'fulfilled' ? featuredResult.value   : []
+  const categories      = categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
 
   return (
     <>
@@ -50,12 +50,12 @@ export default async function HomePage() {
       </section>
 
       {/* Categorías */}
-      {cats.length > 0 && (
+      {categories.length > 0 && (
         <section className="section-padding">
           <div className="container-page">
             <h2 className="mb-8 text-2xl font-bold text-gray-900 dark:text-gray-100">Explora por categoría</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-              {cats.map((cat) => (
+              {categories.map((cat) => (
                 <Link key={cat.id} href={`/courses?categoryId=${cat.id}`}
                   className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 p-4 text-center transition hover:border-primary-300 hover:bg-primary-50 dark:border-gray-800 dark:hover:border-primary-700 dark:hover:bg-primary-950">
                   <span className="text-3xl">{CATEGORY_ICONS[cat.slug] ?? '📚'}</span>
@@ -68,7 +68,7 @@ export default async function HomePage() {
       )}
 
       {/* Cursos destacados */}
-      {courses.length > 0 && (
+      {featuredCourses.length > 0 && (
         <section className="section-padding bg-gray-50 dark:bg-gray-900">
           <div className="container-page">
             <div className="mb-8 flex items-center justify-between">
@@ -78,16 +78,16 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {courses.map((course) => <CourseCard key={course.id} course={course} />)}
+              {featuredCourses.map((course) => <CourseCard key={course.id} course={course} />)}
             </div>
           </div>
         </section>
       )}
 
-      {/* Sin cursos aún */}
-      {courses.length === 0 && cats.length === 0 && (
+      {/* Estado vacío cuando no hay cursos */}
+      {featuredCourses.length === 0 && categories.length === 0 && (
         <section className="section-padding">
-          <div className="container-page text-center py-10">
+          <div className="container-page py-10 text-center">
             <p className="text-5xl mb-4">🚀</p>
             <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">La plataforma está lista</h2>
             <p className="mt-2 text-gray-500">Los primeros cursos aparecerán aquí cuando sean publicados.</p>

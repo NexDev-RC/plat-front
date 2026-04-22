@@ -1,21 +1,20 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Clock, Users, BookOpen, Globe, Award, CheckCircle } from 'lucide-react'
 import { Badge, LevelBadge } from '@/components/ui/Badge'
 import { Rating } from '@/components/ui/Rating'
 import { EnrollButton } from '@/components/courses/EnrollButton'
-import { getCourseBySlug } from '@/services/courses.service'
+import { serverGet } from '@/lib/server-client'
 import { formatDuration, formatPrice } from '@/lib/utils'
 import type { Course } from '@/types'
 import type { Metadata } from 'next'
 
-interface Props { params: Promise<{ courseId: string }> }
+interface Props { params: { courseId: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { courseId } = await params
   try {
-    const course = await getCourseBySlug(courseId)
+    const course = await serverGet<Course>(`/courses/${courseId}`)
     return { title: course.title, description: course.shortDescription }
   } catch {
     return { title: 'Curso no encontrado' }
@@ -27,10 +26,11 @@ export default async function CourseDetailPage({ params }: Props) {
 
   let course: Course | null = null
   try {
-    course = await getCourseBySlug(courseId)
+    course = await serverGet<Course>(`/courses/${courseId}`)
   } catch {
     notFound()
   }
+  console.log('COURSE:', course)
 
   if (!course) notFound()
 
@@ -46,7 +46,9 @@ export default async function CourseDetailPage({ params }: Props) {
             <div className="mb-3 flex flex-wrap gap-2">
               <LevelBadge level={course.level} />
               {course.category?.name && (
-                <Badge variant="outline" className="border-gray-600 text-gray-300">{course.category.name}</Badge>
+                <Badge variant="outline" className="border-gray-600 text-gray-300">
+                  {course.category.name}
+                </Badge>
               )}
             </div>
 
@@ -79,7 +81,6 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Contenido */}
       <div className="container-page py-10 lg:flex lg:gap-10">
         <div className="flex-1 space-y-10">
           {/* Lo que aprenderás */}
@@ -108,7 +109,6 @@ export default async function CourseDetailPage({ params }: Props) {
                 <span>·</span>
                 <span>{formatDuration(course.totalDuration ?? 0)} de duración total</span>
               </div>
-
               <div className="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
                 {course.sections
                   .slice()
@@ -117,7 +117,9 @@ export default async function CourseDetailPage({ params }: Props) {
                     <details key={section.id} className="group">
                       <summary className="flex cursor-pointer items-center justify-between p-4 font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-900">
                         <span>{section.title}</span>
-                        <span className="text-sm font-normal text-gray-400">{section.lessons?.length ?? 0} lecciones</span>
+                        <span className="text-sm font-normal text-gray-400">
+                          {section.lessons?.length ?? 0} lecciones
+                        </span>
                       </summary>
                       <ul className="divide-y divide-gray-100 bg-gray-50/50 dark:divide-gray-800 dark:bg-gray-900/50">
                         {(section.lessons ?? [])
@@ -127,12 +129,16 @@ export default async function CourseDetailPage({ params }: Props) {
                             <li key={lesson.id} className="flex items-center justify-between px-5 py-3 text-sm">
                               <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                                 <BookOpen className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                                <span className={lesson.isFree ? 'text-primary-600 dark:text-primary-400' : ''}>{lesson.title}</span>
+                                <span className={lesson.isFree ? 'text-primary-600 dark:text-primary-400' : ''}>
+                                  {lesson.title}
+                                </span>
                                 {lesson.isFree && (
                                   <Badge variant="primary" className="text-[10px] px-1.5">Gratis</Badge>
                                 )}
                               </div>
-                              <span className="shrink-0 text-gray-400">{formatDuration(lesson.duration)}</span>
+                              <span className="shrink-0 text-gray-400">
+                                {formatDuration(lesson.duration)}
+                              </span>
                             </li>
                           ))}
                       </ul>
@@ -149,7 +155,12 @@ export default async function CourseDetailPage({ params }: Props) {
               <div className="flex items-start gap-4 rounded-xl border border-gray-200 p-5 dark:border-gray-800">
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                   {course.instructor.avatarUrl ? (
-                    <Image src={course.instructor.avatarUrl} alt={course.instructor.name} width={64} height={64} className="object-cover" />
+                    <Image
+                      src={course.instructor.avatarUrl}
+                      alt={course.instructor.name}
+                      width={64} height={64}
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-gray-400">
                       {course.instructor.name?.charAt(0)}
@@ -186,9 +197,7 @@ function PurchaseCard({ course, totalLessons }: { course: Course; totalLessons: 
           <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
         </div>
       )}
-
       <div className="p-5">
-        {/* Precio */}
         <div className="flex items-baseline gap-3">
           <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             {formatPrice(course.price, course.discountPrice ?? undefined)}
@@ -198,12 +207,10 @@ function PurchaseCard({ course, totalLessons }: { course: Course; totalLessons: 
           )}
         </div>
 
-        {/* Botón de inscripción — maneja todos los estados */}
         <EnrollButton courseId={course.id} courseSlug={course.slug} />
 
         <p className="mt-3 text-center text-xs text-gray-400">Garantía de devolución de 30 días</p>
 
-        {/* Detalles */}
         <ul className="mt-5 space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <li className="flex items-center gap-2">
             <Clock    className="h-4 w-4 shrink-0 text-gray-400" />

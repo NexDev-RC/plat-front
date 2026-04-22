@@ -1,12 +1,12 @@
 import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { getCourseAdmin } from '@/services/courses.service'
-import { getCategories } from '@/services/categories.service'
+import { serverGet } from '@/lib/server-client'
 import { CourseForm } from '@/components/admin/CourseForm'
+import type { Course, Category } from '@/types'
 
 interface Props { params: Promise<{ id: string }> }
 
-export const metadata = { title: 'Editar curso' }
+export const metadata = { title: 'Editar curso — Admin' }
 
 export default async function AdminEditCoursePage({ params }: Props) {
   const cookieStore = await cookies()
@@ -15,12 +15,19 @@ export default async function AdminEditCoursePage({ params }: Props) {
 
   const { id } = await params
 
-  let course, categories
+  let course: Course | null = null
+  let categories: Category[] = []
+
   try {
-    ;[course, categories] = await Promise.all([getCourseAdmin(id), getCategories()])
+    ;[course, categories] = await Promise.all([
+      serverGet<Course>(`/courses/manage/${id}`),
+      serverGet<Category[]>('/categories'),
+    ])
   } catch {
     notFound()
   }
+
+  if (!course) notFound()
 
   return (
     <div className="container-page section-padding max-w-3xl">

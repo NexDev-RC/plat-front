@@ -2,9 +2,10 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Clock, BookOpen, Award, Shield, ArrowRight } from 'lucide-react'
-import { getMyEnrollments } from '@/services/enrollments.service'
+import { Clock, BookOpen, Award, ArrowRight } from 'lucide-react'
+import { serverGet } from '@/lib/server-client'
 import { formatDuration } from '@/lib/utils'
+import { AdminBannerClient } from '@/components/admin/AdminBannerClient'
 import type { Enrollment } from '@/types'
 
 export const metadata = { title: 'Mi aprendizaje — EduFlow' }
@@ -18,7 +19,7 @@ export default async function DashboardPage() {
   let apiError = false
 
   try {
-    enrollments = await getMyEnrollments()
+    enrollments = await serverGet<Enrollment[]>('/enrollments/me')
   } catch {
     apiError = true
   }
@@ -30,10 +31,9 @@ export default async function DashboardPage() {
   return (
     <div className="container-page section-padding">
       <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-gray-100">Mi aprendizaje</h1>
-      <p className="mb-8 text-gray-500 dark:text-gray-400">Continúa donde lo dejaste</p>
+      <p className="mb-6 text-gray-500 dark:text-gray-400">Continúa donde lo dejaste</p>
 
-      {/* Banner de acceso rápido al panel admin (se muestra solo si hay cookie de admin) */}
-      <AdminBanner />
+      <AdminBannerClient />
 
       {apiError && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
@@ -41,14 +41,12 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Stats */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard icon={BookOpen} label="Cursos inscritos"   value={enrollments.length} />
         <StatCard icon={Clock}    label="Horas de contenido" value={Math.round(totalHours / 3600)} />
         <StatCard icon={Award}    label="Completados"        value={completed.length} />
       </div>
 
-      {/* En progreso */}
       {inProgress.length > 0 && (
         <section className="mb-10">
           <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">En progreso</h2>
@@ -58,7 +56,6 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* Completados */}
       {completed.length > 0 && (
         <section className="mb-10">
           <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Completados</h2>
@@ -68,7 +65,6 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* Estado vacío */}
       {!apiError && enrollments.length === 0 && (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-300 py-20 text-center dark:border-gray-700">
           <span className="text-6xl">📚</span>
@@ -83,16 +79,6 @@ export default async function DashboardPage() {
     </div>
   )
 }
-
-// Banner solo para admins (detectado del store en client)
-function AdminBanner() {
-  // Este componente es server — no puede leer el store.
-  // Mostramos un banner client-side en un componente separado
-  return <AdminBannerClient />
-}
-
-// Importamos inline para evitar archivo extra
-import { AdminBannerClient } from '@/components/admin/AdminBannerClient'
 
 function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number }) {
   return (
@@ -121,7 +107,6 @@ function EnrollmentCard({ enrollment, showCertificate = false }: { enrollment: E
       <div className="p-4">
         <h3 className="font-semibold leading-snug text-gray-900 dark:text-gray-100 line-clamp-2">{course.title}</h3>
         <p className="mt-1 text-xs text-gray-500">{course.instructor?.name}</p>
-
         <div className="mt-3">
           <div className="mb-1 flex justify-between text-xs text-gray-500">
             <span>{progress}% completado</span>
@@ -131,7 +116,6 @@ function EnrollmentCard({ enrollment, showCertificate = false }: { enrollment: E
             <div className="h-full rounded-full bg-primary-600 transition-all" style={{ width: `${progress}%` }} />
           </div>
         </div>
-
         <div className="mt-3">
           {showCertificate ? (
             <Link href={`/certificate/${enrollment.id}`}
@@ -139,8 +123,7 @@ function EnrollmentCard({ enrollment, showCertificate = false }: { enrollment: E
               <Award className="h-4 w-4" /> Ver certificado
             </Link>
           ) : (
-            <Link
-              href={`/learn/${course.id}${lastWatchedLessonId ? `?lesson=${lastWatchedLessonId}` : ''}`}
+            <Link href={`/learn/${course.id}${lastWatchedLessonId ? `?lesson=${lastWatchedLessonId}` : ''}`}
               className="block w-full rounded-lg bg-primary-600 py-2 text-center text-sm font-medium text-white hover:bg-primary-700">
               Continuar
             </Link>

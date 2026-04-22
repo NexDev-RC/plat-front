@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { getCategories } from '@/services/categories.service'
+import { serverGet } from '@/lib/server-client'
 import { CourseForm } from '@/components/instructor/CourseForm'
+import type { Category } from '@/types'
 
 export const metadata = { title: 'Crear nuevo curso' }
 
@@ -10,12 +11,8 @@ export default async function NewCoursePage() {
   const token = cookieStore.get('access_token')?.value
   if (!token) redirect('/login')
 
-  let categories = []
-  try {
-    categories = await getCategories()
-  } catch {
-    categories = []
-  }
+  let categories: Category[] = []
+  try { categories = await serverGet<Category[]>('/categories') } catch {}
 
   return (
     <div className="container-page section-padding max-w-3xl">

@@ -1,8 +1,8 @@
 import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { getCourseAdmin } from '@/services/courses.service'
-import { getCategories } from '@/services/categories.service'
+import { serverGet } from '@/lib/server-client'
 import { CourseForm } from '@/components/instructor/CourseForm'
+import type { Course, Category } from '@/types'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -15,21 +15,25 @@ export default async function EditCoursePage({ params }: Props) {
 
   const { id } = await params
 
-  let course, categories
+  let course: Course | null = null
+  let categories: Category[] = []
+
   try {
     ;[course, categories] = await Promise.all([
-      getCourseAdmin(id),
-      getCategories(),
+      serverGet<Course>(`/courses/manage/${id}`),
+      serverGet<Category[]>('/categories'),
     ])
   } catch {
     notFound()
   }
 
+  if (!course) notFound()
+
   return (
     <div className="container-page section-padding max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Editar curso</h1>
-        <p className="mt-1 text-gray-500 line-clamp-1">{course.title}</p>
+        <p className="mt-1 text-sm text-gray-500 line-clamp-1">{course.title}</p>
       </div>
       <CourseForm categories={categories} course={course} />
     </div>

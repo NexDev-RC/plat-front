@@ -4,9 +4,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { CourseCard } from '@/components/courses/CourseCard'
 import { CourseCardSkeleton } from '@/components/courses/CourseCardSkeleton'
 import { SortSelect } from '@/components/courses/SortSelect'
-import { getCourses } from '@/services/courses.service'
-import { getCategories } from '@/services/categories.service'
-import type { CourseFilters, Category } from '@/types'
+import { serverGetPaginated, serverGet } from '@/lib/server-client'
+import type { CourseFilters, Course, Category } from '@/types'
 
 interface CoursesPageProps {
   searchParams: Promise<Record<string, string>>
@@ -19,35 +18,25 @@ const LEVELS = [
   { value: 'advanced',     label: 'Avanzado' },
 ]
 
-
 const LIMIT = 12
 
-async function CourseGrid({
-  filters,
-  params,
-}: {
-  filters: CourseFilters
-  params: Record<string, string>
-}) {
-  let courses: any[] = []
+async function CourseGrid({ filters, params }: { filters: CourseFilters; params: Record<string, string> }) {
+  let courses: Course[] = []
   let total = 0
   let totalPages = 1
   const currentPage = filters.page ?? 1
 
   try {
-    const result = await getCourses(filters)
+    const result = await serverGetPaginated<Course>('/courses', filters)
     courses    = result.data
     total      = result.total
     totalPages = result.totalPages
-  } catch {
+  } catch (err: any) {
     return (
       <div className="col-span-full rounded-xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-950">
         <p className="font-medium text-red-700 dark:text-red-300">No se pudo conectar con el servidor</p>
         <p className="mt-1 text-sm text-red-500">
-          Verifica que el backend esté activo en{' '}
-          <code className="rounded bg-red-100 px-1 font-mono dark:bg-red-900">
-            {process.env.NEXT_PUBLIC_API_URL}
-          </code>
+          {err?.message ?? 'Verifica que el backend esté activo'}
         </p>
       </div>
     )
@@ -59,14 +48,11 @@ async function CourseGrid({
         <p className="text-5xl">🔍</p>
         <p className="mt-3 font-medium text-gray-700 dark:text-gray-300">No se encontraron cursos</p>
         <p className="mt-1 text-sm text-gray-500">Prueba con otros filtros o busca algo diferente.</p>
-        <Link href="/courses" className="mt-4 inline-block text-sm text-primary-600 hover:underline">
-          Limpiar filtros
-        </Link>
+        <Link href="/courses" className="mt-4 inline-block text-sm text-primary-600 hover:underline">Limpiar filtros</Link>
       </div>
     )
   }
 
-  // Construir query string para la paginación manteniendo los filtros activos
   function buildPageUrl(page: number) {
     const sp = new URLSearchParams()
     if (params.search)     sp.set('search',     params.search)
@@ -83,16 +69,13 @@ async function CourseGrid({
         {total} {total === 1 ? 'curso encontrado' : 'cursos encontrados'}
       </p>
 
-      {courses.map((course) => (
-        <CourseCard key={course.id} course={course} />
-      ))}
+      {courses.map((course) => <CourseCard key={course.id} course={course} />)}
 
-      {/* Paginación */}
       {totalPages > 1 && (
         <div className="col-span-full mt-6 flex items-center justify-center gap-2">
           {currentPage > 1 ? (
             <Link href={buildPageUrl(currentPage - 1)}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400">
               <ChevronLeft className="h-4 w-4" /> Anterior
             </Link>
           ) : (
@@ -103,24 +86,16 @@ async function CourseGrid({
 
           <div className="flex items-center gap-1">
             {Array.from({ length: Math.min(totalPages, 7) }).map((_, i) => {
-              // Mostrar páginas alrededor de la actual
               let page: number
-              if (totalPages <= 7) {
-                page = i + 1
-              } else if (currentPage <= 4) {
-                page = i + 1
-              } else if (currentPage >= totalPages - 3) {
-                page = totalPages - 6 + i
-              } else {
-                page = currentPage - 3 + i
-              }
+              if (totalPages <= 7)          page = i + 1
+              else if (currentPage <= 4)    page = i + 1
+              else if (currentPage >= totalPages - 3) page = totalPages - 6 + i
+              else                          page = currentPage - 3 + i
               const isActive = page === currentPage
               return (
                 <Link key={page} href={buildPageUrl(page)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary-600 text-white'
-                      : 'border border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium ${
+                    isActive ? 'bg-primary-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400'
                   }`}>
                   {page}
                 </Link>
@@ -130,7 +105,7 @@ async function CourseGrid({
 
           {currentPage < totalPages ? (
             <Link href={buildPageUrl(currentPage + 1)}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400">
               Siguiente <ChevronRight className="h-4 w-4" />
             </Link>
           ) : (
@@ -146,7 +121,6 @@ async function CourseGrid({
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const params = await searchParams
-
   const currentPage = params.page ? Number(params.page) : 1
 
   const filters: CourseFilters = {
@@ -159,7 +133,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   }
 
   let categories: Category[] = []
-  try { categories = await getCategories() } catch {}
+  try { categories = await serverGet<Category[]>('/categories') } catch {}
 
   const hasActiveFilters = !!(params.search || params.categoryId || params.level)
 
@@ -169,19 +143,15 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       <p className="mb-8 text-gray-500 dark:text-gray-400">Encuentra el curso perfecto para alcanzar tus metas</p>
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Sidebar de filtros */}
+        {/* Sidebar */}
         <aside className="w-full shrink-0 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 lg:w-60 lg:self-start">
           <form method="GET" className="space-y-5">
-            {/* Búsqueda */}
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Buscar</h3>
-              <input type="text" name="search" defaultValue={params.search ?? ''}
-                placeholder="Nombre del curso..."
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-              />
+              <input type="text" name="search" defaultValue={params.search ?? ''} placeholder="Nombre del curso..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100" />
             </div>
 
-            {/* Categorías */}
             {categories.length > 0 && (
               <div>
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Categoría</h3>
@@ -200,7 +170,6 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
               </div>
             )}
 
-            {/* Nivel */}
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Nivel</h3>
               <div className="space-y-1.5">
@@ -218,7 +187,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                 Aplicar filtros
               </button>
               {hasActiveFilters && (
-                <Link href="/courses" className="block text-center text-xs text-gray-500 hover:text-primary-600 transition-colors">
+                <Link href="/courses" className="block text-center text-xs text-gray-500 hover:text-primary-600">
                   Limpiar filtros
                 </Link>
               )}
@@ -226,14 +195,12 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           </form>
         </aside>
 
-        {/* Grid de cursos */}
+        {/* Grid */}
         <div className="flex-1">
-          {/* Ordenamiento */}
           <div className="mb-5 flex items-center justify-end gap-2">
             <span className="hidden text-sm text-gray-500 sm:block">Ordenar por:</span>
             <SortSelect currentValue={params.sortBy ?? 'newest'} />
           </div>
-
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             <Suspense fallback={Array.from({ length: 6 }).map((_, i) => <CourseCardSkeleton key={i} />)}>
               <CourseGrid filters={filters} params={params} />
