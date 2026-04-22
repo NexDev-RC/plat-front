@@ -54,7 +54,6 @@ export async function getCourseBySlug(slugOrId: string): Promise<Course> {
 /** GET /api/courses/manage/my — cursos del instructor autenticado */
 export async function getMyCourses(): Promise<Course[]> {
   const { data } = await apiClient.get<ApiResponse<Course[]>>('/courses/manage/my')
-  console.log(data.data)
   return data.data
 }
 

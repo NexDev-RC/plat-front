@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/auth.store'
 import { enrollInCourse, getCourseProgress } from '@/services/enrollments.service'
@@ -13,97 +11,79 @@ interface Props {
   courseSlug: string
 }
 
+type EnrollState = 'loading' | 'guest' | 'enrolled' | 'not-enrolled'
+
 export function EnrollButton({ courseId, courseSlug }: Props) {
   const router = useRouter()
   const { user, isAuthenticated, _hasHydrated } = useAuthStore()
 
-  const [loading,  setLoading]  = useState(false)
-  const [enrolled, setEnrolled] = useState(false)
-  const [checking, setChecking] = useState(true)
+  const [state,     setState]     = useState<EnrollState>('loading')
+  const [enrolling, setEnrolling] = useState(false)
 
+  // Verificar inscripción al montar
   useEffect(() => {
     if (!_hasHydrated) return
 
-    // Admin: no necesita verificar inscripción
-    if (!isAuthenticated || user?.role === 'admin' || user?.role === 'instructor') {
-      setChecking(false)
+    if (!isAuthenticated) {
+      setState('guest')
       return
     }
 
-    // Student: verificar si ya está inscrito
+    // Tanto admin como student pueden inscribirse y ver el reproductor
     getCourseProgress(courseId)
-      .then(() => setEnrolled(true))
-      .catch(() => setEnrolled(false))
-      .finally(() => setChecking(false))
-  }, [_hasHydrated, isAuthenticated, user, courseId])
+      .then(() => setState('enrolled'))
+      .catch(() => setState('not-enrolled'))
+  }, [_hasHydrated, isAuthenticated, courseId])
 
-  // ── Aún hidratando ────────────────────────────────────────────────────────
-  if (!_hasHydrated || checking) {
+  // ── Skeleton durante hidratación ──────────────────────────────────────────
+  if (state === 'loading') {
     return <div className="mt-4 h-12 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
   }
 
-  // ── Admin: ver botón de editar ────────────────────────────────────────────
-  if (user?.role === 'admin') {
+  // ── No autenticado → ir al login ──────────────────────────────────────────
+  if (state === 'guest') {
     return (
-      <div className="mt-4 flex gap-2">
-        <Link
-          href={`/admin/courses/${courseId}/edit`}
-          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary-600 py-3 text-sm font-medium text-white hover:bg-primary-700"
-        >
-          <Pencil className="h-4 w-4" /> Editar curso
-        </Link>
-      </div>
-    )
-  }
-
-  // ── Instructor: solo ver (no se inscribe) ─────────────────────────────────
-  if (user?.role === 'instructor') {
-    return (
-      <p className="mt-4 rounded-lg bg-gray-100 py-3 text-center text-sm text-gray-500 dark:bg-gray-800">
-        Los instructores no pueden inscribirse en cursos.
-      </p>
-    )
-  }
-
-  // ── No autenticado ────────────────────────────────────────────────────────
-  if (!isAuthenticated) {
-    return (
-      <Button fullWidth size="lg" className="mt-4" onClick={() => router.push(`/login?redirect=/courses/${courseSlug}`)}>
+      <Button
+        fullWidth size="lg" className="mt-4"
+        onClick={() => router.push(`/login?redirect=/courses/${courseSlug}`)}
+      >
         Iniciar sesión para inscribirse
       </Button>
     )
   }
 
-  // ── Student ya inscrito ───────────────────────────────────────────────────
-  if (enrolled) {
+  // ── Ya inscrito → ir al reproductor ──────────────────────────────────────
+  if (state === 'enrolled') {
     return (
-      <Button fullWidth size="lg" className="mt-4" onClick={() => router.push(`/learn/${courseId}`)}>
-        Continuar aprendiendo
+      <Button
+        fullWidth size="lg" variant="secondary" className="mt-4"
+        onClick={() => router.push(`/learn/${courseId}`)}
+      >
+        Continuar aprendiendo →
       </Button>
     )
   }
 
-  // ── Student: inscribirse ──────────────────────────────────────────────────
+  // ── No inscrito → inscribirse (student, instructor, admin) ────────────────
   async function handleEnroll() {
-    setLoading(true)
+    setEnrolling(true)
     try {
       await enrollInCourse(courseId)
-      setEnrolled(true)
+      setState('enrolled')
       router.push(`/learn/${courseId}`)
     } catch (err: any) {
-      if (err?.message?.includes('Ya estás inscrito')) {
-        setEnrolled(true)
+      if (err?.message?.toLowerCase().includes('ya estás inscrito')) {
+        setState('enrolled')
         router.push(`/learn/${courseId}`)
       } else {
         alert(err?.message ?? 'Error al inscribirse. Intenta de nuevo.')
+        setEnrolling(false)
       }
-    } finally {
-      setLoading(false)
     }
   }
 
   return (
-    <Button fullWidth size="lg" className="mt-4" loading={loading} onClick={handleEnroll}>
+    <Button fullWidth size="lg" className="mt-4" loading={enrolling} onClick={handleEnroll}>
       Inscribirse ahora
     </Button>
   )

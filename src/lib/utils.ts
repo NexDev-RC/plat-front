@@ -44,24 +44,8 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength).trimEnd() + '…'
 }
 
-<<<<<<< HEAD
-/** Formatea fecha a formato legible */
-export function formatDate(dateString: string): string {
-  if (!dateString) return ''
-  try {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).format(date)
-  } catch {
-    return dateString
-  }
-=======
 /** Calcula el porcentaje de descuento */
 export function discountPercent(price: number, discountPrice: number): number {
   if (!price || !discountPrice || discountPrice >= price) return 0
   return Math.round(((price - discountPrice) / price) * 100)
->>>>>>> 711a514b841dea312764ba0d9a446970983d7655
 }
