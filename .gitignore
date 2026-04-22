@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-node_modules
-=======
 # Dependencias
 /node_modules
 /.pnp
@@ -55,4 +52,3 @@ docker-compose.override.yml
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
->>>>>>> 711a514b841dea312764ba0d9a446970983d7655
