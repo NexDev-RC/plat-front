@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/auth.store'
 import { enrollInCourse, getCourseProgress } from '@/services/enrollments.service'
 
 interface Props {
-  courseId:   string
-  courseSlug: string
+  courseId:   string   // UUID del curso (para la API)
+  courseSlug: string   // slug (para la URL pública)
 }
 
-type EnrollState = 'loading' | 'guest' | 'enrolled' | 'not-enrolled'
+type State = 'checking' | 'guest' | 'enrolled' | 'not-enrolled'
 
 export function EnrollButton({ courseId, courseSlug }: Props) {
   const router = useRouter()
-  const { user, isAuthenticated, _hasHydrated } = useAuthStore()
+  const { isAuthenticated, _hasHydrated } = useAuthStore()
 
-  const [state,     setState]     = useState<EnrollState>('loading')
+  const [state,     setState]     = useState<State>('checking')
   const [enrolling, setEnrolling] = useState(false)
 
-  // Verificar inscripción al montar
   useEffect(() => {
     if (!_hasHydrated) return
 
@@ -29,42 +29,40 @@ export function EnrollButton({ courseId, courseSlug }: Props) {
       return
     }
 
-    // Tanto admin como student pueden inscribirse y ver el reproductor
+    // Verificar si ya está inscrito usando el ID del curso
     getCourseProgress(courseId)
       .then(() => setState('enrolled'))
       .catch(() => setState('not-enrolled'))
   }, [_hasHydrated, isAuthenticated, courseId])
 
-  // ── Skeleton durante hidratación ──────────────────────────────────────────
-  if (state === 'loading') {
-    return <div className="mt-4 h-12 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+  // Skeleton mientras hidrata o verifica
+  if (state === 'checking') {
+    return (
+      <div className="mt-4 h-12 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+    )
   }
 
-  // ── No autenticado → ir al login ──────────────────────────────────────────
+  // No autenticado
   if (state === 'guest') {
     return (
-      <Button
-        fullWidth size="lg" className="mt-4"
-        onClick={() => router.push(`/login?redirect=/courses/${courseSlug}`)}
-      >
+      <Button fullWidth size="lg" className="mt-4"
+        onClick={() => router.push(`/login?redirect=/courses/${courseSlug}`)}>
         Iniciar sesión para inscribirse
       </Button>
     )
   }
 
-  // ── Ya inscrito → ir al reproductor ──────────────────────────────────────
+  // Ya inscrito
   if (state === 'enrolled') {
     return (
-      <Button
-        fullWidth size="lg" variant="secondary" className="mt-4"
-        onClick={() => router.push(`/learn/${courseId}`)}
-      >
-        Continuar aprendiendo →
+      <Button fullWidth size="lg" variant="secondary" className="mt-4 gap-2"
+        onClick={() => router.push(`/learn/${courseId}`)}>
+        <CheckCircle className="h-4 w-4" /> Continuar aprendiendo
       </Button>
     )
   }
 
-  // ── No inscrito → inscribirse (student, instructor, admin) ────────────────
+  // No inscrito → botón de inscripción
   async function handleEnroll() {
     setEnrolling(true)
     try {
@@ -72,7 +70,8 @@ export function EnrollButton({ courseId, courseSlug }: Props) {
       setState('enrolled')
       router.push(`/learn/${courseId}`)
     } catch (err: any) {
-      if (err?.message?.toLowerCase().includes('ya estás inscrito')) {
+      const msg = (err?.message ?? '').toLowerCase()
+      if (msg.includes('ya estás inscrito') || msg.includes('already enrolled')) {
         setState('enrolled')
         router.push(`/learn/${courseId}`)
       } else {

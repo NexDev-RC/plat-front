@@ -9,7 +9,7 @@ import { formatDuration, formatPrice } from '@/lib/utils'
 import type { Course } from '@/types'
 import type { Metadata } from 'next'
 
-interface Props { params: { courseId: string } }
+interface Props { params: Promise<{ courseId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { courseId } = await params
@@ -30,7 +30,6 @@ export default async function CourseDetailPage({ params }: Props) {
   } catch {
     notFound()
   }
-  console.log('COURSE:', course)
 
   if (!course) notFound()
 
