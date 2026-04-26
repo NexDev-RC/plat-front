@@ -13,23 +13,24 @@ export default async function AdminPage() {
 
   const [usersResult, coursesResult] = await Promise.allSettled([
     serverGetPaginated<User>('/users', { page: 1, limit: 200 }),
-    serverGetPaginated<Course>('/courses', { limit: 200, sortBy: 'newest' }),
+    // manage/my devuelve TODOS los cursos del instructor/admin (publicados Y borradores)
+    serverGet<Course[]>('/courses/manage/my'),
   ])
 
-  const usersData   = usersResult.status   === 'fulfilled'
+  const usersData = usersResult.status === 'fulfilled'
     ? usersResult.value
-    : { data: [] as User[],   total: 0, page: 1, limit: 200, totalPages: 1 }
+    : { data: [] as User[], total: 0, page: 1, limit: 200, totalPages: 1 }
 
-  const coursesData = coursesResult.status === 'fulfilled'
+  const allCourses = coursesResult.status === 'fulfilled'
     ? coursesResult.value
-    : { data: [] as Course[], total: 0, page: 1, limit: 200, totalPages: 1 }
+    : [] as Course[]
 
   return (
     <AdminDashboard
       initialUsers={usersData.data}
-      initialCourses={coursesData.data}
+      initialCourses={allCourses}
       usersTotal={usersData.total}
-      coursesTotal={coursesData.total}
+      coursesTotal={allCourses.length}
     />
   )
 }
