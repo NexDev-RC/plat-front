@@ -1,12 +1,14 @@
 {
-  "name": "plat-front",
+  "name": "eduflow",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "clean": "rimraf .next",
+    "fresh": "rimraf .next && next dev"
   },
   "dependencies": {
     "next": "16.2.4",
@@ -27,11 +29,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/js-cookie": "^3.0.6",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "@types/js-cookie": "^3.0.6",
-    "autoprefixer": "^10.0.1"
+    "typescript": "^5"
   }
 }

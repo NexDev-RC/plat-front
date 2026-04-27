@@ -1,18 +1,41 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/*
+  En Tailwind v4 los colores custom se definen con @theme.
+  Esto reemplaza la sección "extend.colors" del tailwind.config.ts.
+*/
+@theme {
+  /* Paleta primary (azul-índigo) */
+  --color-primary-50:  #f0f4ff;
+  --color-primary-100: #dde7ff;
+  --color-primary-200: #c3d0ff;
+  --color-primary-300: #9db1ff;
+  --color-primary-400: #7488ff;
+  --color-primary-500: #5060fa;
+  --color-primary-600: #3d48ef;
+  --color-primary-700: #3236d4;
+  --color-primary-800: #2a2dab;
+  --color-primary-900: #282c87;
+  --color-primary-950: #191a4f;
+
+  /* Paleta accent (naranja) */
+  --color-accent-50:  #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea6c0c;
+
+  /* Border radius */
+  --radius-4xl: 2rem;
+}
 
 @layer base {
-  :root {
-    --radius: 0.5rem;
-  }
-
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-50;
+    @apply bg-white text-gray-900;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -30,20 +53,23 @@
   }
 
   .skeleton {
-    @apply animate-pulse rounded-md bg-gray-200 dark:bg-gray-800;
+    @apply animate-pulse rounded-md bg-gray-200;
   }
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: theme('colors.gray.300') transparent;
+    scrollbar-color: theme(--color-gray-300) transparent;
   }
+
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
   }
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-gray-300 dark:bg-gray-700;
+    @apply rounded-full bg-gray-300;
   }
 }
