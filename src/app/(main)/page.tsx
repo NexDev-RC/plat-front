@@ -3,6 +3,7 @@ import { ArrowRight, TrendingUp, Shield, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonBase, sizeClasses } from '@/components/ui/Button'
 import { CourseCard } from '@/components/courses/CourseCard'
+import { EnhancedCourseCard } from '@/components/courses/EnhancedCourseCard'
 import { serverGet, serverGetPaginated } from '@/lib/server-client'
 import type { Course, Category } from '@/types'
 
@@ -18,13 +19,20 @@ const CATEGORY_ICONS: Record<string, string> = {
 }
 
 export default async function HomePage() {
-  const [featuredResult, categoriesResult] = await Promise.allSettled([
+  const [featuredResult, categoriesResult, trendingResult, newResult] = await Promise.allSettled([
     serverGet<Course[]>('/courses/featured'),
     serverGet<Category[]>('/categories'),
+    serverGet<Course[]>('/courses/trending'),
+    serverGet<Course[]>('/courses/new'),
   ])
 
-  const featuredCourses = featuredResult.status   === 'fulfilled' ? featuredResult.value   : []
-  const categories      = categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
+  const featuredCourses = featuredResult.status === 'fulfilled' ? featuredResult.value : []
+  const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
+  const trendingCourses = trendingResult.status === 'fulfilled' ? trendingResult.value : []
+  const newCourses = newResult.status === 'fulfilled' ? newResult.value : []
+  
+  // Para recomendados, usamos algunos cursos destacados con la propiedad isTrending
+  const recommendedCourses = featuredCourses.slice(0, 3).map(course => ({ ...course, isTrending: false }))
 
   return (
     <>
@@ -61,6 +69,81 @@ export default async function HomePage() {
                   <span className="text-3xl">{CATEGORY_ICONS[cat.slug] ?? '📚'}</span>
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{cat.name}</span>
                 </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Los más vistos (Trending) */}
+      {trendingCourses.length > 0 && (
+        <section className="section-padding">
+          <div className="container-page">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Los más vistos
+                </h2>
+                <p className="text-gray-600">Los cursos más populares en este momento</p>
+              </div>
+              <Link href="/courses?sortBy=popular" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                Ver todos <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {trendingCourses.map(course => (
+                <EnhancedCourseCard key={course.id} course={{ ...course, isTrending: true }} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Nuevos Cursos */}
+      {newCourses.length > 0 && (
+        <section className="section-padding bg-gray-50 dark:bg-gray-900">
+          <div className="container-page">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Nuevos Cursos
+                </h2>
+                <p className="text-gray-600">Las últimas adiciones a nuestra plataforma</p>
+              </div>
+              <Link href="/courses?sortBy=newest" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                Ver todos <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {newCourses.map(course => (
+                <EnhancedCourseCard key={course.id} course={{ ...course, isNew: true }} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Recomendados */}
+      {recommendedCourses.length > 0 && (
+        <section className="section-padding">
+          <div className="container-page">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Recomendados
+                </h2>
+                <p className="text-gray-600">Basado en tu historial y preferencias</p>
+              </div>
+              <Link href="/courses" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                Ver todos <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recommendedCourses.map(course => (
+                <EnhancedCourseCard key={course.id} course={course} />
               ))}
             </div>
           </div>

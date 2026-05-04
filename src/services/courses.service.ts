@@ -45,6 +45,18 @@ export async function getFeaturedCourses(): Promise<Course[]> {
   return data.data
 }
 
+/** GET /api/courses/trending — cursos más populares */
+export async function getTrendingCourses(): Promise<Course[]> {
+  const { data } = await apiClient.get<ApiResponse<Course[]>>('/courses/trending')
+  return data.data
+}
+
+/** GET /api/courses/new — cursos más recientes */
+export async function getNewCourses(): Promise<Course[]> {
+  const { data } = await apiClient.get<ApiResponse<Course[]>>('/courses/new')
+  return data.data
+}
+
 /** GET /api/courses/:slugOrId — detalle público */
 export async function getCourseBySlug(slugOrId: string): Promise<Course> {
   const { data } = await apiClient.get<ApiResponse<Course>>(`/courses/${slugOrId}`)

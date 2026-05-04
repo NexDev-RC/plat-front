@@ -42,7 +42,7 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-gray-950">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
+        <div className="mb-8 flex flex-col items-center" suppressHydrationWarning>
           <Link href="/" className="flex items-center gap-2 font-bold text-primary-600">
             <BookOpen className="h-7 w-7" />
             <span className="text-xl">EduFlow</span>
