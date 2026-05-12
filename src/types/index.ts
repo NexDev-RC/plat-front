@@ -8,6 +8,16 @@ export interface User {
   bio?: string | null
   role: 'student' | 'instructor' | 'admin'
   createdAt: string
+  
+  // 🆕 Campos adicionales para gestión completa de usuarios
+  apellidoPaterno?: string      // Apellido paterno
+  apellidoMaterno?: string      // Apellido materno
+  nombres?: string              // Nombres (separado del name completo)
+  fechaNacimiento?: string      // Fecha de nacimiento (formato YYYY-MM-DD)
+  telefonoCelular?: string      // Teléfono celular
+  pais?: string                 // País
+  departamento?: string         // Departamento/Estado/Región
+  // Nota: avatarUrl ya existe, se usa para la foto de perfil
 }
 
 // ─── Curso ────────────────────────────────────────────────────────────────────

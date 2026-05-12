@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Users, BookOpen, GraduationCap, UserCog, LayoutDashboard, Plus } from 'lucide-react'
+import { Users, BookOpen, GraduationCap, UserCog, LayoutDashboard, Plus, Eye } from 'lucide-react'
 import { AdminUsersPanel } from './AdminUsersPanel'
 import { AdminCoursesPanel } from './AdminCoursesPanel'
+import { AdminUsersDetailPanel } from './AdminUsersDetailPanel'  // ← NUEVO componente
 import type { User, Course } from '@/types'
 
-type Tab = 'courses' | 'users'
+type Tab = 'courses' | 'users' 
+type ViewType = 'simple' | 'detail'  // ← NUEVO: para cambiar vista dentro de usuarios
 
 interface Props {
   initialUsers:   User[]
@@ -18,7 +20,7 @@ interface Props {
 
 export function AdminDashboard({ initialUsers, initialCourses, usersTotal, coursesTotal }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('courses')
-  // Estado del modal de crear usuario elevado aquí para que el botón lo pueda abrir
+  const [usersView, setUsersView] = useState<ViewType>('simple')  // ← NUEVO estado
   const [createUserOpen, setCreateUserOpen] = useState(false)
 
   const students    = initialUsers.filter((u) => u.role === 'student').length
@@ -69,55 +71,90 @@ export function AdminDashboard({ initialUsers, initialCourses, usersTotal, cours
 
       {/* Tabs + acción */}
       <div className="mb-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
-        <div className="flex">
+        <div className="flex gap-1">
           {TABS.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            <button 
+              key={tab.id} 
+              onClick={() => {
+                setActiveTab(tab.id)
+                if (tab.id === 'users') setUsersView('simple') // Resetear a vista simple al cambiar a usuarios
+              }}
               className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}>
+              }`}
+            >
               <tab.icon className="h-4 w-4" />
               {tab.label}
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                 activeTab === tab.id
-                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                   : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
               }`}>
                 {tab.count}
               </span>
             </button>
           ))}
+
+          {/* BOTÓN "DETALLES" - solo visible cuando el tab activo es USUARIOS */}
+          {activeTab === 'users' && (
+            <button
+              onClick={() => setUsersView(usersView === 'simple' ? 'detail' : 'simple')}
+              className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
+                usersView === 'detail'
+                  ? 'border-green-600 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <Eye className="h-4 w-4" />
+              Detalles
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                usersView === 'detail'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+              }`}>
+                {usersView === 'detail' ? 'ON' : 'OFF'}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Botón acción del tab activo */}
         <div className="pb-1">
           {activeTab === 'courses' && (
             <Link href="/admin/courses/new"
-              className="flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors">
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
               <Plus className="h-4 w-4" /> Nuevo curso
             </Link>
           )}
-          {activeTab === 'users' && (
+          {activeTab === 'users' && usersView === 'simple' && (
             <button
               onClick={() => setCreateUserOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors">
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
               <Plus className="h-4 w-4" /> Nuevo usuario
             </button>
           )}
         </div>
       </div>
 
-      {/* Paneles — siempre montados para no perder estado */}
+      {/* Paneles */}
       <div className={activeTab === 'courses' ? 'block' : 'hidden'}>
         <AdminCoursesPanel initialCourses={initialCourses} />
       </div>
-      <div className={activeTab === 'users' ? 'block' : 'hidden'}>
+      
+      {/* Panel de Usuarios - vista simple */}
+      <div className={activeTab === 'users' && usersView === 'simple' ? 'block' : 'hidden'}>
         <AdminUsersPanel
           initialUsers={initialUsers}
           createOpen={createUserOpen}
           onCreateOpenChange={setCreateUserOpen}
         />
+      </div>
+
+      {/* Panel de Usuarios - vista DETALLES (nueva) */}
+      <div className={activeTab === 'users' && usersView === 'detail' ? 'block' : 'hidden'}>
+        <AdminUsersDetailPanel initialUsers={initialUsers} />
       </div>
     </div>
   )
