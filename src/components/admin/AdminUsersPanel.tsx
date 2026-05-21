@@ -1,13 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { Trash2, Pencil, Search } from 'lucide-react'
+import { Trash2, Pencil, Search, Eye } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { createUserAsAdmin, updateUserRole, deleteUser } from '@/services/users.service'
 import { formatDate } from '@/lib/utils'
 import type { User } from '@/types'
 
+// ── Componente helper para campos del modal de detalles ──────────────────────
+function DetailField({ label, value }: { label: string; value?: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</p>
+      <div className="border-b border-gray-100 dark:border-gray-800 pb-1.5">
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{value || '—'}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Constantes ───────────────────────────────────────────────────────────────
 const ROLE_LABELS: Record<string, string> = {
   student:    'Estudiante',
   instructor: 'Instructor',
@@ -56,21 +69,19 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
   const [editError,   setEditError]   = useState('')
   const [editLoading, setEditLoading] = useState(false)
 
+  // Modal ver detalles
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [isModalOpen,  setIsModalOpen]  = useState(false)
+
   // ── Filtrado ────────────────────────────────────────────────────────────────
   const filtered = users.filter((u) => {
-    const q = search.toLowerCase()
+    const q           = search.toLowerCase()
     const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
     const matchRole   = filterRole === 'all' || u.role === filterRole
     return matchSearch && matchRole
   })
 
   // ── Crear ───────────────────────────────────────────────────────────────────
-  function openCreate() {
-    setCreateForm(EMPTY)
-    setCreateError('')
-    onCreateOpenChange(true)
-  }
-
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (createForm.password.length < 8) {
@@ -126,6 +137,12 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
     } finally {
       setActionId(null)
     }
+  }
+
+  // ── Ver detalles ────────────────────────────────────────────────────────────
+  function handleViewDetails(user: User) {
+    setSelectedUser(user)
+    setIsModalOpen(true)
   }
 
   return (
@@ -200,16 +217,28 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+
+                      {/* ── Botón ojo verde ── */}
+                      <button onClick={() => handleViewDetails(user)}
+                        className="rounded-md p-1.5 text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 dark:hover:text-green-400"
+                        title="Ver detalles">
+                        <Eye className="h-4 w-4" />
+                      </button>
+
+                      {/* ── Botón editar ── */}
                       <button onClick={() => openEdit(user)}
                         className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-800 dark:hover:text-primary-400"
                         title="Editar rol">
                         <Pencil className="h-4 w-4" />
                       </button>
+
+                      {/* ── Botón eliminar ── */}
                       <button onClick={() => handleDelete(user)} disabled={!!actionId}
                         className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400 disabled:opacity-40"
                         title="Eliminar">
                         <Trash2 className="h-4 w-4" />
                       </button>
+
                     </div>
                   </td>
                 </tr>
@@ -276,7 +305,6 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
       <Modal open={!!editUser} onClose={() => setEditUser(null)} title="Editar usuario" size="sm">
         {editUser && (
           <form onSubmit={handleEdit} className="space-y-4">
-            {/* Info usuario */}
             <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300">
                 {editUser.name.charAt(0).toUpperCase()}
@@ -286,7 +314,6 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
                 <p className="truncate text-xs text-gray-500">{editUser.email}</p>
               </div>
             </div>
-
             <div>
               <label className={labelCls}>Nuevo rol</label>
               <select value={editRole} onChange={(e) => setEditRole(e.target.value)} className={inputCls}>
@@ -295,7 +322,6 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
                 <option value="admin">Administrador</option>
               </select>
             </div>
-
             {editError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
                 {editError}
@@ -312,6 +338,75 @@ export function AdminUsersPanel({ initialUsers, createOpen, onCreateOpenChange }
           </form>
         )}
       </Modal>
+
+      {/* ── Modal: Ver detalles ───────────────────────────────────────────────── */}
+      {isModalOpen && selectedUser != null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-lg max-w-2xl w-full max-h-[100vh] shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 p-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Detalles completos del usuario
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ✖️
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              {/* Avatar + nombre + rol */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-800">
+                  {selectedUser.avatarUrl ? (
+                    <img src={selectedUser.avatarUrl} alt="Foto" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl text-gray-400">👤</span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedUser.name}</h3>
+                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold leading-5 ${ROLE_COLORS[selectedUser.role] || ROLE_COLORS.student}`}>
+                    {ROLE_LABELS[selectedUser.role] || selectedUser.role}
+                  </span>
+                </div>
+              </div>
+
+              {/* Grid de campos */}
+              <div className="grid grid-cols-2 gap-4">
+                <DetailField label="Nombres"            value={(selectedUser as any).nombres || selectedUser.name} />
+                <DetailField label="Apellido Paterno"   value={(selectedUser as any).apellidoPaterno} />
+                <DetailField label="Apellido Materno"   value={(selectedUser as any).apellidoMaterno} />
+                <DetailField label="Fecha Nacimiento"   value={(selectedUser as any).fechaNacimiento} />
+                <DetailField label="Teléfono Celular"   value={(selectedUser as any).telefonoCelular} />
+                <DetailField label="Correo Electrónico" value={selectedUser.email} />
+                <DetailField label="País"               value={(selectedUser as any).pais} />
+                <DetailField label="Departamento"       value={(selectedUser as any).departamento} />
+              </div>
+
+              {/* URL foto */}
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  🖼️ URL Foto
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 break-all">
+                  {selectedUser.avatarUrl || 'Sin foto'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
